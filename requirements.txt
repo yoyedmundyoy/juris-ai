@@ -3,4 +3,3 @@ openai
 snowflake
 snowflake-snowpark-python
 snowflake.core
-json

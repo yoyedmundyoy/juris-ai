@@ -13,9 +13,9 @@ cmd = """
           """
 
 # service params
-CORTEX_SEARCH_DATABASE = "CC_QUICKSTART_CORTEX_SEARCH_DOCS"
+CORTEX_SEARCH_DATABASE = "JURIS_AI"
 CORTEX_SEARCH_SCHEMA = "DATA"
-CORTEX_SEARCH_SERVICE = "CC_SEARCH_SERVICE_CS"
+CORTEX_SEARCH_SERVICE = "JURIS_SEARCH_SERVICE"
 
 #connection params
 connection_params = {
@@ -30,8 +30,8 @@ connection_params = {
 # columns to query in the service
 COLUMNS = [
     "chunk",
-    "relative_path",
-    "category"
+    "relative_path"
+    # "category"
 ]
 
 session = Session.builder.configs(connection_params).create()
@@ -55,13 +55,13 @@ def config_options():
                                      'llama2-70b-chat',
                                      'gemma-7b'), key="model_name")
 
-    categories = session.table('docs_chunks_table').select('category').distinct().collect()
+    # categories = session.table('docs_chunks_table').select('category').distinct().collect()
 
-    cat_list = ['ALL']
-    for cat in categories:
-        cat_list.append(cat.CATEGORY)
+    # cat_list = ['ALL']
+    # for cat in categories:
+    #     cat_list.append(cat.CATEGORY)
             
-    st.sidebar.selectbox('Select what products you are looking for', cat_list, key = "category_value")
+    # st.sidebar.selectbox('Select what products you are looking for', cat_list, key = "category_value")
 
     st.sidebar.checkbox('Do you want that I remember the chat history?', key="use_chat_history", value = True)
 
@@ -77,12 +77,13 @@ def init_messages():
 
 def get_similar_chunks_search_service(query):
 
-    if st.session_state.category_value == "ALL":
-        response = svc.search(query, COLUMNS, limit=NUM_CHUNKS)
-    else: 
-        filter_obj = {"@eq": {"category": st.session_state.category_value} }
-        response = svc.search(query, COLUMNS, filter=filter_obj, limit=NUM_CHUNKS)
+    # if st.session_state.category_value == "ALL":
+    #     response = svc.search(query, COLUMNS, limit=NUM_CHUNKS)
+    # else: 
+    #     filter_obj = {"@eq": {"category": st.session_state.category_value} }
+    #     response = svc.search(query, COLUMNS, filter=filter_obj, limit=NUM_CHUNKS)
 
+    response = svc.search(query, COLUMNS, limit=NUM_CHUNKS)
     st.sidebar.json(response.json())
     
     return response.json()  
@@ -143,18 +144,12 @@ def create_prompt (myquestion):
         chat_history = ""
   
     prompt = f"""
-           You are an expert chat assistance that extracs information from the CONTEXT provided
-           between <context> and </context> tags.
-           You offer a chat experience considering the information included in the CHAT HISTORY
-           provided between <chat_history> and </chat_history> tags..
-           When ansering the question contained between <question> and </question> tags
-           be concise and do not hallucinate. 
-           If you don´t have the information just say so.
-           
-           Do not mention the CONTEXT used in your answer.
-           Do not mention the CHAT HISTORY used in your asnwer.
-
-           Only anwer the question if you can extract it from the CONTEXT provideed.
+            You are a legal expert AI assistant that extracts information from the CONTEXT provided between <context> and </context> tags.
+            Your task is to respond concisely to the QUESTION in the <question> and </question> tags based on the information in the CONTEXT.
+            You should consider the CHAT HISTORY between <chat_history> and </chat_history> tags, but do not reference it directly in your answer.
+            When answering the question, you should only use the information in the CONTEXT provided. If the information is not available or unclear, simply say: "I don't have enough information to answer that."
+            Do not mention the CONTEXT or CHAT HISTORY in your answer.
+            Answer concisely, accurately, and without hallucination.
            
            <chat_history>
            {chat_history}
